@@ -15,6 +15,8 @@
         "symfony/yaml": "7.4.*"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2"
     },
     "config": {
         "allow-plugins": {
@@ -55,7 +57,16 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "db-migrate:next": "php bin/console doctrine:migrations:migrate next",
+        "db-migrate:generate": "php bin/console doctrine:migrations:generate",
+        "phpstan": "vendor/bin/phpstan analyse",
+        "cs-fix": "vendor/bin/php-cs-fixer fix",
+        "code-fix": [
+            "@cs-fix",
+            "@phpstan"
+        ],
+        "test": "vendor/bin/phpunit --testdox"
     },
     "conflict": {
         "symfony/symfony": "*"
