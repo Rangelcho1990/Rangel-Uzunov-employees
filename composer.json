@@ -72,6 +72,8 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
+        "db-migrate:next": "php bin/console doctrine:migrations:migrate next",
+        "db-migrate:generate": "php bin/console doctrine:migrations:generate",
         "phpstan": "vendor/bin/phpstan analyse",
         "cs-fix": "vendor/bin/php-cs-fixer fix",
         "code-fix": [

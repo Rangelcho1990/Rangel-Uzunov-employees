@@ -17,11 +17,11 @@ final class CreateEmployeesCollaborationRepository extends ServiceEntityReposito
     }
 
     /**
-     * @param list<int|string> $assignments Flat SQL parameters in repeating groups of five:
-     *                                      employee ID (int), project ID (int), days worked (int),
-     *                                      start date (Y-m-d string), end date (Y-m-d string).
-     *                                      The number of values must be a multiple of five.
-     *                                      An empty list is allowed and performs no insert.
+     * @param list<int|string|null> $assignments Flat SQL parameters in repeating groups of five:
+     *                                           employee ID (int), project ID (int),
+     *                                           start date (Y-m-d string), end date (Y-m-d string or null).
+     *                                           The number of values must be a multiple of five.
+     *                                           An empty list is allowed and performs no insert.
      */
     public function insertBatch(array $assignments): void
     {
@@ -33,9 +33,9 @@ final class CreateEmployeesCollaborationRepository extends ServiceEntityReposito
             throw new \InvalidArgumentException('Each assignment must contain exactly five SQL parameters.');
         }
 
-        $sql = 'INSERT INTO employees_collaboration (empoyee_id, project_id, days_worked, date_from, date_to)
-             VALUES '.implode(', ', array_fill(0, intdiv(count($assignments), 5), '(?, ?, ?, ?, ?)')).'
-             ON DUPLICATE KEY UPDATE date_to = VALUES(date_to), days_worked = VALUES(days_worked)
+        $sql = 'INSERT INTO employees_collaboration (empoyee_id, project_id, date_from, date_to)
+             VALUES '.implode(', ', array_fill(0, intdiv(count($assignments), 4), '(?, ?, ?, ?, ?)')).'
+             ON DUPLICATE KEY UPDATE date_to = VALUES(date_to)
          ';
 
         $this->getEntityManager()->getConnection()->executeStatement(

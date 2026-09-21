@@ -28,7 +28,7 @@ final class Version20260921120000 extends AbstractMigration
                 project_id INT NOT NULL,
                 days_worked INT NOT NULL,
                 date_from DATE NOT NULL,
-                date_to DATE NOT NULL,
+                date_to DATE DEFAULT NULL,
                 PRIMARY KEY (id),
                 UNIQUE INDEX uniq_collaboration_assignment (empoyee_id, project_id, date_from),
                 INDEX idx_collaboration_project_employee_dates (project_id, empoyee_id, date_from, date_to)

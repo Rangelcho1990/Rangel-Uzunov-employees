@@ -25,16 +25,13 @@ class EmployeesCollaboration
     #[ORM\Column(name: 'project_id')]
     private int $projectId;
 
-    #[ORM\Column(name: 'days_worked')]
-    private int $daysWorked;
-
     #[ORM\Column(name: 'date_from', type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $dateFrom;
 
-    #[ORM\Column(name: 'date_to', type: Types::DATE_IMMUTABLE)]
-    private \DateTimeImmutable $dateTo;
+    #[ORM\Column(name: 'date_to', type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $dateTo = null;
 
-    public function __construct(int $employeeId, int $projectId, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo)
+    public function __construct(int $employeeId, int $projectId, \DateTimeImmutable $dateFrom, ?\DateTimeImmutable $dateTo = null)
     {
         if ($dateFrom > $dateTo) {
             throw new \InvalidArgumentException('The start date must be on or before the end date.');
@@ -44,7 +41,6 @@ class EmployeesCollaboration
         $this->projectId = $projectId;
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
-        $this->daysWorked = (int) $dateFrom->diff($dateTo)->format('%a') + 1;
     }
 
     public function getId(): ?int
@@ -62,17 +58,12 @@ class EmployeesCollaboration
         return $this->projectId;
     }
 
-    public function getDaysWorked(): int
-    {
-        return $this->daysWorked;
-    }
-
     public function getDateFrom(): \DateTimeImmutable
     {
         return $this->dateFrom;
     }
 
-    public function getDateTo(): \DateTimeImmutable
+    public function getDateTo(): ?\DateTimeImmutable
     {
         return $this->dateTo;
     }

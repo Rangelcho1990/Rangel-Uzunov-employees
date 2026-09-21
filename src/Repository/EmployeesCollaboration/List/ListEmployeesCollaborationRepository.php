@@ -25,7 +25,7 @@ final class ListEmployeesCollaborationRepository extends ServiceEntityRepository
     public function findLongestTeam(): array
     {
         return $this->getEntityManager()->getConnection()->fetchAllAssociative(
-            'SELECT id, empoyee_id, project_id, days_worked, date_from, date_to FROM employees_collaboration',
+            'SELECT id, empoyee_id, project_id, date_from, date_to FROM employees_collaboration',
         );
     }
 }

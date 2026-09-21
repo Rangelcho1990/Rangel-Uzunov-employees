@@ -8,7 +8,6 @@ use App\Entity\Employees\EmployeesCollaboration;
 use App\Exception\InvalidCsv;
 use App\Infrastructure\DateParser;
 use App\Infrastructure\FileUpload\AssignmentReaderInterface;
-use App\Infrastructure\SystemTodayProvider;
 use App\Repository\EmployeesCollaboration\Create\CreateEmployeesCollaborationInterface;
 use App\Service\EmployeesCollaboration\Create\DTO\FileParsedDataDTO;
 use Doctrine\DBAL\Connection;
@@ -22,7 +21,6 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
         private CreateEmployeesCollaborationInterface $repository,
         private Connection $connection,
         private DateParser $dates,
-        private SystemTodayProvider $clock,
     ) {
     }
 
@@ -54,9 +52,7 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
 
     public function insertBatch(FileParsedDataDTO $formData): int
     {
-        $today = $this->clock->today();
-
-        return $this->connection->transactional(function () use ($formData, $today): int {
+        return $this->connection->transactional(function () use ($formData): int {
             $batch = [];
             $count = 0;
 
@@ -66,16 +62,15 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
                         $record['employeeId'],
                         $record['projectId'],
                         $this->parseDate($record['dateFrom']),
-                        null === $record['dateTo'] ? $today : $this->parseDate($record['dateTo']),
+                        null === $record['dateTo'] ? null : $this->parseDate($record['dateTo']),
                     );
 
                     array_push(
                         $batch,
                         $assignment->getEmployeeId(),
                         $assignment->getProjectId(),
-                        $assignment->getDaysWorked(),
                         $assignment->getDateFrom()->format('Y-m-d'),
-                        $assignment->getDateTo()->format('Y-m-d')
+                        $assignment->getDateTo()?->format('Y-m-d')
                     );
                 } catch (\InvalidArgumentException|\ValueError $exception) {
                     throw new InvalidCsv(sprintf('Record %d: %s', $index + 1, $exception->getMessage()), previous: $exception);

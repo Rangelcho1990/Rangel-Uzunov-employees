@@ -46,6 +46,20 @@ final class DatabaseImportTest extends KernelTestCase
         parent::tearDown();
     }
 
+    public function testNullEndDateIsStoredAndUsedAsToday(): void
+    {
+        $today = gmdate('Y-m-d');
+        $this->import("1,10,$today,NULL\n2,10,$today,$today");
+        self::assertNull($this->connection->fetchOne('SELECT date_to FROM employees_collaboration WHERE empoyee_id = 1'));
+        $entity = $this->repository->findOneBy(['employeeId' => 1]);
+        self::assertInstanceOf(EmployeesCollaboration::class, $entity);
+        self::assertNull($entity->getDateTo());
+        self::assertSame(1, $entity->getDaysWorked());
+        $result = (new ListCollaborationService($this->repository))->getList();
+        self::assertNotNull($result);
+        self::assertSame(1, $result['totalDays']);
+    }
+
     public function testReuploadUpdatesAssignmentAndEntityIsHydrated(): void
     {
         $this->import("1,10,2024-01-01,2024-01-05\n2,10,2024-01-01,2024-01-10");

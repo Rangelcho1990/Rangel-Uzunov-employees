@@ -20,44 +20,46 @@ final readonly class ListCollaborationService implements ListCollaborationServic
     /** @return array{firstEmployeeId: int, secondEmployeeId: int, totalDays: int, projectDays: array<int, int>}|null */
     public function getList(): ?array
     {
-        $projects = [];
+        $today = gmdate('Y-m-d');
+        $periods = [];
         $data = $this->repository->findLongestTeam();
 
+        $collaborations = [];
         foreach ($data as $row) {
             $project = $this->integer($row['project_id']);
             $employee = $this->integer($row['empoyee_id']);
-            $projects[$project][$employee][] = [$this->day($row['date_from']), $this->day($row['date_to'])];
+
+            $dateFrom = $this->day($row['date_from']);
+            $dateTo = $this->day($row['date_to'] ?? $today);
+
+            $daysWorked = (int) $dateFrom->diff($dateTo)->format('%a') + 1;
+
+            $collaborations[$project][$employee] = $daysWorked;
+            $periods[$project][$employee][] = [
+                (int) floor($dateFrom->getTimestamp() / 86400),
+                (int) floor($dateTo->getTimestamp() / 86400),
+            ];
         }
 
         $pairs = [];
-        foreach ($projects as $project => $employees) {
-            $periods = [];
-            foreach ($employees as $employee => $ranges) {
-                foreach ($this->merge($ranges) as [$start, $end]) {
-                    $periods[] = ['employee' => $employee, 'start' => $start, 'end' => $end];
-                }
+        foreach ($collaborations as $project => $users) {
+            ksort($users, SORT_NUMERIC);
+            $employeeIds = array_keys($users);
+            foreach ($employeeIds as $employee) {
+                $periods[$project][$employee] = $this->merge($periods[$project][$employee]);
             }
-            usort($periods, static fn (array $a, array $b): int => $a['start'] <=> $b['start']);
-            $active = [];
-            foreach ($periods as $period) {
-                // Only compare with periods that still overlap the current start date.
-                foreach ($active as $index => $other) {
-                    if ($other['end'] < $period['start']) {
-                        unset($active[$index]);
+
+            foreach ($employeeIds as $index => $first) {
+                foreach (array_slice($employeeIds, $index + 1) as $second) {
+                    $days = $this->sharedDays($periods[$project][$first], $periods[$project][$second]);
+                    if (0 === $days) {
                         continue;
                     }
-                    if ($other['employee'] === $period['employee']) {
-                        continue;
-                    }
-                    $first = min($other['employee'], $period['employee']);
-                    $second = max($other['employee'], $period['employee']);
                     $key = $first.':'.$second;
-                    $days = min($other['end'], $period['end']) - $period['start'] + 1;
                     $pairs[$key] ??= ['firstEmployeeId' => $first, 'secondEmployeeId' => $second, 'totalDays' => 0, 'projectDays' => []];
+                    $pairs[$key]['projectDays'][$project] = $days;
                     $pairs[$key]['totalDays'] += $days;
-                    $pairs[$key]['projectDays'][$project] = ($pairs[$key]['projectDays'][$project] ?? 0) + $days;
                 }
-                $active[] = $period;
             }
         }
 
@@ -97,6 +99,27 @@ final readonly class ListCollaborationService implements ListCollaborationServic
         return $merged;
     }
 
+    /**
+     * @param list<array{int, int}> $first
+     * @param list<array{int, int}> $second
+     */
+    private function sharedDays(array $first, array $second): int
+    {
+        $i = $j = $days = 0;
+        while (isset($first[$i], $second[$j])) {
+            $start = max($first[$i][0], $second[$j][0]);
+            $end = min($first[$i][1], $second[$j][1]);
+            $days += max(0, $end - $start + 1);
+            if ($first[$i][1] <= $second[$j][1]) {
+                ++$i;
+            } else {
+                ++$j;
+            }
+        }
+
+        return $days;
+    }
+
     private function integer(mixed $value): int
     {
         if (!is_int($value) && !(is_string($value) && ctype_digit($value))) {
@@ -106,7 +129,7 @@ final readonly class ListCollaborationService implements ListCollaborationServic
         return (int) $value;
     }
 
-    private function day(mixed $value): int
+    private function day(mixed $value): \DateTimeImmutable
     {
         if (!is_string($value)) {
             throw new \UnexpectedValueException('Expected a database date string.');
@@ -116,6 +139,6 @@ final readonly class ListCollaborationService implements ListCollaborationServic
             throw new \UnexpectedValueException('Invalid database date.');
         }
 
-        return (int) floor($date->getTimestamp() / 86400);
+        return $date;
     }
 }
