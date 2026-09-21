@@ -1,0 +1,29 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #18283c; background: #f3f6fa; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 920px; margin: 64px auto; padding: 0 24px; }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); letter-spacing: -.04em; line-height: 1.15; margin: 12px 0; }
+h2 { margin-top: 0; font-size: 1.35rem; }
+.eyebrow { color: #285e9e; font-weight: 700; font-size: .75rem; letter-spacing: .12em; }
+.intro { color: #526177; line-height: 1.7; max-width: 650px; margin-bottom: 32px; }
+.card { background: white; border: 1px solid #dce4ee; border-radius: 16px; padding: 30px; margin-top: 24px; box-shadow: 0 5px 20px #172b4d05; }
+label { display: block; font-weight: 600; margin-bottom: 12px; }
+input[type=file] { width: 100%; padding: 20px; border: 1px dashed #8095af; border-radius: 8px; background: #f8fafc; }
+input::file-selector-button { padding: 8px 12px; margin-right: 12px; cursor: pointer; }
+.hint { font-size: .85rem; color: #526177; }
+button { background: #205aa0; color: white; border: none; border-radius: 7px; font: inherit; font-weight: 600; padding: 12px 20px; margin: 12px 0; cursor: pointer; }
+button:hover { background: #16457d; }
+:focus-visible { outline: 3px solid #e8a227; outline-offset: 3px; }
+details { margin-top: 20px; border-top: 1px solid #e1e7ef; padding-top: 20px; line-height: 1.6; }
+summary { cursor: pointer; font-weight: 600; }
+pre { overflow-x: auto; background: #f3f6fa; padding: 16px; border-radius: 8px; }
+form ul { color: #a11c28; padding-left: 22px; }
+.total strong { font-size: 2rem; color: #205aa0; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+caption { text-align: left; color: #526177; margin-bottom: 12px; }
+th, td { padding: 14px 12px; border-bottom: 1px solid #e1e7ef; white-space: nowrap; }
+th { background: #f3f6fa; font-size: .85rem; }
+@media (max-width: 560px) { main { margin: 32px auto; padding: 0 16px; } .card { padding: 20px; } }
+[hidden] { display: none !important; }
+.notice { background: #e7f5ec; color: #185c34; padding: 16px; border-radius: 8px; }

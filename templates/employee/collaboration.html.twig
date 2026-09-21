@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Employee collaboration | Longest team{% endblock %}
+{% block stylesheets %}<link rel="stylesheet" href="/styles/employees.css">{% endblock %}
+{% block body %}
+<main>
+    <p class="eyebrow">EMPLOYEE COLLABORATION</p>
+    <h1>Find the longest-working team</h1>
+    <p class="intro">Upload your project assignments to discover which two employees worked together the longest.</p>
+    {% for message in app.flashes('success') %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
+    <button type="button" id="toggle-upload" aria-controls="upload-panel" aria-expanded="{{ showUpload ? 'true' : 'false' }}">Upload assignments</button>
+        <section class="card results" aria-labelledby="results-heading" aria-live="polite">
+            {% if result %}
+                <p class="eyebrow">LONGEST COLLABORATION</p>
+                <h2 id="results-heading">Employees {{ result.firstEmployeeId }} &amp; {{ result.secondEmployeeId }}</h2>
+                <p class="total"><strong>{{ result.totalDays }}</strong> days together across {{ result.projectDays|length }} project(s)</p>
+                <div class="table-wrap">
+                    <table>
+                        <caption>Common projects for the winning pair</caption>
+                        <thead><tr><th scope="col">Employee ID #1</th><th scope="col">Employee ID #2</th><th scope="col">Project ID</th><th scope="col">Days worked</th></tr></thead>
+                        <tbody>{% for project, days in result.projectDays %}<tr><td>{{ result.firstEmployeeId }}</td><td>{{ result.secondEmployeeId }}</td><td>{{ project }}</td><td>{{ days }}</td></tr>{% endfor %}</tbody>
+                    </table>
+                </div>
+            {% else %}
+                <h2 id="results-heading">{{ hasAssignments ? 'No overlapping assignments' : 'No assignments yet' }}</h2>
+                <p>{{ hasAssignments ? 'No two employees worked on the same project on the same day.' : 'Upload a CSV file to save assignments and see the longest-working team.' }}</p>
+            {% endif %}
+        </section>
+    <section id="upload-panel" class="card" aria-labelledby="upload-heading" {% if not showUpload %}hidden{% endif %}>
+        <h2 id="upload-heading">Upload assignments</h2>
+        {{ form_start(form) }}
+            {{ form_errors(form) }}
+            {{ form_row(form.file) }}
+            <p id="csv-help" class="hint">CSV assignments are saved to the database. Matching employee, project and start dates update the existing assignment.</p>
+            <button type="submit">Save assignments</button>
+        {{ form_end(form) }}
+        <details>
+            <summary>CSV format and calculation rules</summary>
+            <p>Four columns, with an optional header:</p>
+            <pre>EmpID,ProjectID,DateFrom,DateTo
+143,10,2024-01-01,2024-03-31
+218,10,2024-02-01,NULL</pre>
+            <p>Use positive integer IDs. Dates: YYYY-MM-DD, YYYY/MM/DD, DD/MM/YYYY, DD.MM.YYYY or DD-MM-YYYY. Slash dates with the year last are day-first.</p>
+            <p>NULL means today (UTC) at upload time. Both start and end dates count. Duplicate or overlapping assignments are counted once per project. Days across projects are added together. Ties select the pair with the lowest employee IDs.</p>
+        </details>
+    </section>
+
+</main>
+{% endblock %}
+
+{% block javascripts %}<script src="/scripts/employees.js" defer></script>{% endblock %}
