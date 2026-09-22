@@ -1,5 +1,7 @@
 # Employee collaboration
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the current implementation, data flow, validation, database model and development setup.
+
 Symfony application backed by the local MySQL/MariaDB database `sirma`. The home page displays the longest-working employee pair and their common projects from saved assignments, or a relevant empty state. **Upload assignments** reveals the CSV form. A successful upload redirects to the home page so refreshing does not resubmit it.
 
 ## Database setup
