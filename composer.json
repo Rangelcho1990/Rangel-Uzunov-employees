@@ -67,6 +67,7 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": [
+            "@database:setup",
             "@auto-scripts"
         ],
         "post-update-cmd": [

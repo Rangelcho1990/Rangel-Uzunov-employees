@@ -10,12 +10,13 @@ Doctrine ORM, DBAL, DoctrineBundle and DoctrineMigrationsBundle are installed. C
 DATABASE_URL="mysql://USER:PASSWORD@127.0.0.1:3306/sirma?serverVersion=YOUR_SERVER_VERSION&charset=utf8mb4"
 ```
 
-Use your actual server version (for example `8.0.32` for MySQL or `10.11.14-MariaDB` for MariaDB); URL-encode special characters in credentials. SQL window functions require MySQL 8+ or MariaDB 10.2+.
+Use your actual server version (for example `8.0.32` for MySQL or `10.11.14-MariaDB` for MariaDB); URL-encode special characters in credentials. The database account must have permission to create the database and tables. The MySQL/MariaDB server must already be running.
 
 ```sh
 composer install
-composer database:setup
 ```
+
+`composer install` automatically runs `database:setup` before Symfony cache and asset setup. It creates `sirma` if missing and applies pending migrations. Existing databases are preserved. You can also run `composer database:setup` manually if installation scripts were skipped with `--no-scripts`.
 
 The setup script runs `doctrine:database:create --if-not-exists` followed by `doctrine:migrations:migrate --no-interaction`. Database creation must precede migrations because Doctrine stores migration history inside the selected database. The table migration uses `CREATE TABLE IF NOT EXISTS`. It does not alter or erase an existing table; `php bin/console doctrine:schema:validate` checks whether an existing schema matches. Rollback intentionally refuses to drop a potentially pre-existing table.
 
@@ -26,11 +27,14 @@ The setup script runs `doctrine:database:create --if-not-exists` followed by `do
 | id | Auto-increment primary key |
 | empoyee_id | Employee ID; spelling follows the requested schema |
 | project_id | Project ID |
-| days_worked | Inclusive duration of this assignment |
 | date_from | Start date |
 | date_to | End date |
 
-A unique index on `(empoyee_id, project_id, date_from)` defines assignment identity. Re-uploading that combination updates `date_to` and `days_worked`; a different start date creates a separate period. If the same key appears multiple times in a file, the last record wins. Records absent from an upload are retained. A project/employee/date index supports the reporting query.
+The `uniq_employee_project_start_date` unique index on `(empoyee_id, project_id, date_from)` defines assignment identity. Re-uploading that combination updates `date_to`; a different start date creates a separate period. If the same key appears multiple times in a file, the last record wins. Records absent from an upload are retained. The `idx_project_employee_date_range` index orders `(project_id, empoyee_id, date_from, date_to)` to support queries filtered by project and then employee/date. The current full-table SELECT does not necessarily benefit from it.
+
+The schema is consolidated into `Version20260921120000`. Fresh databases need only this migration. Databases that already executed the earlier migrations retain their schema and migration history: editing migration files does not re-run an executed version or rename existing indexes. Do not reset a database containing assignments simply to adopt this baseline.
+
+The migration does not set `AUTO_INCREMENT=14`: this is a dump's next-ID value, not a structural requirement. A fresh table starts at 1.
 
 ## Uploads and calculations
 

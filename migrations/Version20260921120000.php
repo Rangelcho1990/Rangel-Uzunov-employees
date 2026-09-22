@@ -26,12 +26,11 @@ final class Version20260921120000 extends AbstractMigration
                 id INT AUTO_INCREMENT NOT NULL,
                 empoyee_id INT NOT NULL,
                 project_id INT NOT NULL,
-                days_worked INT NOT NULL,
                 date_from DATE NOT NULL,
                 date_to DATE DEFAULT NULL,
                 PRIMARY KEY (id),
-                UNIQUE INDEX uniq_collaboration_assignment (empoyee_id, project_id, date_from),
-                INDEX idx_collaboration_project_employee_dates (project_id, empoyee_id, date_from, date_to)
+                UNIQUE INDEX uniq_employee_project_start_date (empoyee_id, project_id, date_from),
+                INDEX idx_project_employee_date_range (project_id, empoyee_id, date_from, date_to)
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB
             SQL);
     }

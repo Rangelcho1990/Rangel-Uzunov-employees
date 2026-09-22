@@ -10,8 +10,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ListEmployeesCollaborationRepository::class)]
 #[ORM\Table(name: 'employees_collaboration')]
-#[ORM\UniqueConstraint(name: 'uniq_collaboration_assignment', columns: ['empoyee_id', 'project_id', 'date_from'])]
-#[ORM\Index(name: 'idx_collaboration_project_employee_dates', columns: ['project_id', 'empoyee_id', 'date_from', 'date_to'])]
+#[ORM\UniqueConstraint(name: 'uniq_employee_project_start_date', columns: ['empoyee_id', 'project_id', 'date_from'])]
+#[ORM\Index(name: 'idx_project_employee_date_range', columns: ['project_id', 'empoyee_id', 'date_from', 'date_to'])]
 class EmployeesCollaboration
 {
     #[ORM\Id]
