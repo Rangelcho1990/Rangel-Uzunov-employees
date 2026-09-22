@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service\EmployeesCollaboration\Create;
 
-use App\Entity\Employees\EmployeesCollaboration;
 use App\Exception\InvalidCsv;
-use App\Infrastructure\DateParser;
 use App\Infrastructure\FileUpload\AssignmentReaderInterface;
 use App\Repository\EmployeesCollaboration\Create\CreateEmployeesCollaborationInterface;
 use App\Service\EmployeesCollaboration\Create\DTO\FileParsedDataDTO;
+use App\Validator\AssignmentRecordValidator;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -20,7 +19,7 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
         private AssignmentReaderInterface $reader,
         private CreateEmployeesCollaborationInterface $repository,
         private Connection $connection,
-        private DateParser $dates,
+        private AssignmentRecordValidator $records,
     ) {
     }
 
@@ -52,29 +51,21 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
 
     public function insertBatch(FileParsedDataDTO $formData): int
     {
-        return $this->connection->transactional(function () use ($formData): int {
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+
+        return $this->connection->transactional(function () use ($formData, $today): int {
             $batch = [];
             $count = 0;
 
             foreach ($formData->data as $index => $record) {
-                try {
-                    $assignment = new EmployeesCollaboration(
-                        $record['employeeId'],
-                        $record['projectId'],
-                        $this->parseDate($record['dateFrom']),
-                        null === $record['dateTo'] ? null : $this->parseDate($record['dateTo']),
-                    );
-
-                    array_push(
-                        $batch,
-                        $assignment->getEmployeeId(),
-                        $assignment->getProjectId(),
-                        $assignment->getDateFrom()->format('Y-m-d'),
-                        $assignment->getDateTo()?->format('Y-m-d')
-                    );
-                } catch (\InvalidArgumentException|\ValueError $exception) {
-                    throw new InvalidCsv(sprintf('Record %d: %s', $index + 1, $exception->getMessage()), previous: $exception);
-                }
+                $assignment = $this->records->validateAndNormalize($record, $index + 1, $today);
+                array_push(
+                    $batch,
+                    $assignment['employeeId'],
+                    $assignment['projectId'],
+                    $assignment['dateFrom'],
+                    $assignment['dateTo'],
+                );
                 ++$count;
 
                 if (0 === $count % 500) {
@@ -89,17 +80,5 @@ final readonly class CreateCollaborationService implements CreateCollaborationSe
 
             return $count;
         });
-    }
-
-    private function parseDate(mixed $value): \DateTimeImmutable
-    {
-        if ($value instanceof \DateTimeInterface) {
-            return $this->dates->parse($value->format('Y-m-d'));
-        }
-        if (!is_string($value)) {
-            throw new \InvalidArgumentException('Dates must be date strings or DateTime objects.');
-        }
-
-        return $this->dates->parse(trim($value));
     }
 }

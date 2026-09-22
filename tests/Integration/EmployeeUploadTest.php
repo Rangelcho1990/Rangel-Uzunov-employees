@@ -70,7 +70,7 @@ final class EmployeeUploadTest extends WebTestCase
     {
         $this->submitCsv('1,10,2024-02-30,2024-03-01');
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'Record 1: Invalid date');
+        self::assertSelectorTextContains('form', 'Record 1: dateFrom: Invalid date');
         self::assertSelectorExists('#upload-panel:not([hidden])');
     }
 

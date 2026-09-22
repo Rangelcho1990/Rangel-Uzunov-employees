@@ -35,8 +35,8 @@ final class CsvAssignmentReaderTest extends TestCase
             ['employeeId' => 143, 'projectId' => 12, 'dateFrom' => 'not-a-date', 'dateTo' => null],
             ['employeeId' => 218, 'projectId' => 10, 'dateFrom' => ' 2024-01-01 ', 'dateTo' => '2024-02-01'],
         ], $rows->data);
-        self::assertSame(143, $rows->data[0]['employeeId']);
-        self::assertSame(12, $rows->data[0]['projectId']);
+        self::assertSame('143', $rows->data[0]['employeeId']);
+        self::assertSame(' 12', $rows->data[0]['projectId']);
         self::assertNull($rows->data[0]['dateTo']);
     }
 

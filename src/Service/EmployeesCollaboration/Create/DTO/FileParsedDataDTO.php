@@ -6,7 +6,7 @@ namespace App\Service\EmployeesCollaboration\Create\DTO;
 
 final readonly class FileParsedDataDTO
 {
-    /** @param list<array{employeeId: int, projectId: int, dateFrom: mixed, dateTo: mixed}> $data */
+    /** @param list<array{employeeId: int|string|null, projectId: int|string|null, dateFrom: mixed, dateTo: mixed}> $data */
     public function __construct(public array $data = [])
     {
     }

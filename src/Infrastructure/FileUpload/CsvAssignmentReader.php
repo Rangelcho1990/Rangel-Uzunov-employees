@@ -38,8 +38,8 @@ final readonly class CsvAssignmentReader implements AssignmentReaderInterface
                     throw new InvalidCsv(sprintf('Row %d: expected four columns (EmpID, ProjectID, DateFrom, DateTo).', $record));
                 }
                 $rows[] = [
-                    'employeeId' => (int) $row[0],
-                    'projectId' => (int) $row[1],
+                    'employeeId' => $row[0],
+                    'projectId' => $row[1],
                     'dateFrom' => $row[2],
                     'dateTo' => null !== $row[3] && 'NULL' === strtoupper(trim($row[3])) ? null : $row[3],
                 ];
