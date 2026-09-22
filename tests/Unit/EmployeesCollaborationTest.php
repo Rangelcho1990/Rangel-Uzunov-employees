@@ -9,10 +9,11 @@ use PHPUnit\Framework\TestCase;
 
 final class EmployeesCollaborationTest extends TestCase
 {
-    public function testInclusiveDays(): void
+    public function testStoresAssignmentDates(): void
     {
         $assignment = new EmployeesCollaboration(1, 2, new \DateTimeImmutable('2024-02-28'), new \DateTimeImmutable('2024-03-01'));
-        self::assertSame(3, $assignment->getDaysWorked());
+        self::assertSame('2024-02-28', $assignment->getDateFrom()->format('Y-m-d'));
+        self::assertSame('2024-03-01', $assignment->getDateTo()?->format('Y-m-d'));
         self::assertNull($assignment->getId());
     }
 

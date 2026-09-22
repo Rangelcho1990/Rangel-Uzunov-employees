@@ -17,10 +17,10 @@ final class CreateEmployeesCollaborationRepository extends ServiceEntityReposito
     }
 
     /**
-     * @param list<int|string|null> $assignments Flat SQL parameters in repeating groups of five:
+     * @param list<int|string|null> $assignments Flat SQL parameters in repeating groups of four:
      *                                           employee ID (int), project ID (int),
      *                                           start date (Y-m-d string), end date (Y-m-d string or null).
-     *                                           The number of values must be a multiple of five.
+     *                                           The number of values must be a multiple of four.
      *                                           An empty list is allowed and performs no insert.
      */
     public function insertBatch(array $assignments): void
@@ -29,12 +29,12 @@ final class CreateEmployeesCollaborationRepository extends ServiceEntityReposito
             return;
         }
 
-        if (0 !== count($assignments) % 5) {
-            throw new \InvalidArgumentException('Each assignment must contain exactly five SQL parameters.');
+        if (0 !== count($assignments) % 4) {
+            throw new \InvalidArgumentException('Each assignment must contain exactly four SQL parameters.');
         }
 
         $sql = 'INSERT INTO employees_collaboration (empoyee_id, project_id, date_from, date_to)
-             VALUES '.implode(', ', array_fill(0, intdiv(count($assignments), 4), '(?, ?, ?, ?, ?)')).'
+             VALUES '.implode(', ', array_fill(0, intdiv(count($assignments), 4), '(?, ?, ?, ?)')).'
              ON DUPLICATE KEY UPDATE date_to = VALUES(date_to)
          ';
 

@@ -33,7 +33,7 @@ class EmployeesCollaboration
 
     public function __construct(int $employeeId, int $projectId, \DateTimeImmutable $dateFrom, ?\DateTimeImmutable $dateTo = null)
     {
-        if ($dateFrom > $dateTo) {
+        if (null !== $dateTo && $dateFrom > $dateTo) {
             throw new \InvalidArgumentException('The start date must be on or before the end date.');
         }
 

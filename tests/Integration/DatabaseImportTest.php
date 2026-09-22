@@ -10,6 +10,9 @@ use App\Infrastructure\FileUpload\CsvAssignmentReader;
 use App\Repository\EmployeesCollaboration\List\ListEmployeesCollaborationRepository;
 use App\Service\EmployeesCollaboration\Create\CreateCollaborationService;
 use App\Service\EmployeesCollaboration\List\ListCollaborationService;
+use App\Service\EmployeesCollaboration\List\LongestTeamCalculator;
+use App\Service\EmployeesCollaboration\List\OverlapCalculator;
+use App\Service\EmployeesCollaboration\List\PeriodMerger;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -54,8 +57,7 @@ final class DatabaseImportTest extends KernelTestCase
         $entity = $this->repository->findOneBy(['employeeId' => 1]);
         self::assertInstanceOf(EmployeesCollaboration::class, $entity);
         self::assertNull($entity->getDateTo());
-        self::assertSame(1, $entity->getDaysWorked());
-        $result = (new ListCollaborationService($this->repository))->getList();
+        $result = (new ListCollaborationService($this->repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList();
         self::assertNotNull($result);
         self::assertSame(1, $result['totalDays']);
     }
@@ -65,26 +67,26 @@ final class DatabaseImportTest extends KernelTestCase
         $this->import("1,10,2024-01-01,2024-01-05\n2,10,2024-01-01,2024-01-10");
         $this->import('1,10,2024-01-01,2024-01-08');
         self::assertSame(2, $this->repository->count([]));
-        $result = (new ListCollaborationService($this->repository))->getList();
+        $result = (new ListCollaborationService($this->repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList();
         self::assertNotNull($result);
         self::assertSame(8, $result['totalDays']);
         $entity = $this->repository->findOneBy(['employeeId' => 1]);
         self::assertInstanceOf(EmployeesCollaboration::class, $entity);
         self::assertNotNull($entity->getId());
-        self::assertSame(8, $entity->getDaysWorked());
+        self::assertSame('2024-01-08', $entity->getDateTo()?->format('Y-m-d'));
     }
 
     public function testOverlappingNestedDisjointPeriodsAndProjectTotals(): void
     {
         $this->import("1,10,2024-01-01,2024-01-10\n1,10,2024-01-03,2024-01-04\n1,10,2024-01-08,2024-01-12\n1,10,2024-01-20,2024-01-22\n2,10,2024-01-01,2024-01-31\n2,10,2024-01-02,2024-01-30\n1,20,2024-01-01,2024-01-02\n2,20,2024-01-02,2024-01-03");
-        self::assertSame(['firstEmployeeId' => 1, 'secondEmployeeId' => 2, 'totalDays' => 16, 'projectDays' => [10 => 15, 20 => 1]], (new ListCollaborationService($this->repository))->getList());
+        self::assertSame(['firstEmployeeId' => 1, 'secondEmployeeId' => 2, 'totalDays' => 16, 'projectDays' => [10 => 15, 20 => 1]], (new ListCollaborationService($this->repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList());
     }
 
     public function testTiesAndNoOverlap(): void
     {
         self::assertSame(0, $this->repository->count([]));
         $this->import("10,10,2024-01-01,2024-01-05\n3,10,2024-01-01,2024-01-05\n2,10,2024-01-01,2024-01-05");
-        $result = (new ListCollaborationService($this->repository))->getList();
+        $result = (new ListCollaborationService($this->repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList();
         self::assertNotNull($result);
         self::assertSame(2, $result['firstEmployeeId']);
         self::assertSame(3, $result['secondEmployeeId']);
@@ -102,7 +104,7 @@ final class DatabaseImportTest extends KernelTestCase
             self::fail('Expected invalid CSV.');
         } catch (InvalidCsv) {
             self::assertSame(1, $this->repository->count([]));
-            self::assertEquals(5, $this->connection->fetchOne('SELECT days_worked FROM employees_collaboration'));
+            self::assertSame('2024-01-05', $this->connection->fetchOne('SELECT date_to FROM employees_collaboration'));
         }
     }
 
@@ -114,7 +116,7 @@ final class DatabaseImportTest extends KernelTestCase
         }
         self::assertSame(10000, $this->import($csv));
         self::assertSame(10000, $this->repository->count([]));
-        $result = (new ListCollaborationService($this->repository))->getList();
+        $result = (new ListCollaborationService($this->repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList();
         self::assertNotNull($result);
         self::assertSame(10000, $result['totalDays']);
         $manager = self::getContainer()->get(EntityManagerInterface::class);

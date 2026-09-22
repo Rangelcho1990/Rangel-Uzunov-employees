@@ -6,6 +6,9 @@ namespace App\Tests\Unit;
 
 use App\Repository\EmployeesCollaboration\List\ListEmployeesCollaborationInterface;
 use App\Service\EmployeesCollaboration\List\ListCollaborationService;
+use App\Service\EmployeesCollaboration\List\LongestTeamCalculator;
+use App\Service\EmployeesCollaboration\List\OverlapCalculator;
+use App\Service\EmployeesCollaboration\List\PeriodMerger;
 use PHPUnit\Framework\TestCase;
 
 final class ListCollaborationServiceTest extends TestCase
@@ -23,14 +26,14 @@ final class ListCollaborationServiceTest extends TestCase
         self::assertSame([
             'firstEmployeeId' => 1, 'secondEmployeeId' => 2,
             'totalDays' => 7, 'projectDays' => [10 => 6, 12 => 1],
-        ], (new ListCollaborationService($repository))->getList());
+        ], (new ListCollaborationService($repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList());
     }
 
     public function testNoRecordsReturnsNull(): void
     {
         $repository = $this->createStub(ListEmployeesCollaborationInterface::class);
         $repository->method('findLongestTeam')->willReturn([]);
-        self::assertNull((new ListCollaborationService($repository))->getList());
+        self::assertNull((new ListCollaborationService($repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList());
     }
 
     public function testDisjointPeriodsDoNotFormTeam(): void
@@ -40,7 +43,7 @@ final class ListCollaborationServiceTest extends TestCase
             ['empoyee_id' => 1, 'project_id' => 1, 'date_from' => '2024-01-01', 'date_to' => '2024-01-02'],
             ['empoyee_id' => 2, 'project_id' => 1, 'date_from' => '2024-01-03', 'date_to' => '2024-01-04'],
         ]);
-        self::assertNull((new ListCollaborationService($repository))->getList());
+        self::assertNull((new ListCollaborationService($repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList());
     }
 
     public function testCalculatesSharedDaysRatherThanSummingAssignmentDays(): void
@@ -53,6 +56,6 @@ final class ListCollaborationServiceTest extends TestCase
         self::assertSame([
             'firstEmployeeId' => 1, 'secondEmployeeId' => 2,
             'totalDays' => 1, 'projectDays' => [1 => 1],
-        ], (new ListCollaborationService($repository))->getList());
+        ], (new ListCollaborationService($repository, new LongestTeamCalculator(new PeriodMerger(), new OverlapCalculator())))->getList());
     }
 }
